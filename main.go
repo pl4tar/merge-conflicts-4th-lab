@@ -19,7 +19,7 @@ type Node struct {
 	ID    int
 	Data  Data
 	Mutex sync.Mutex
-	Peers []*Node // соседние узлы для репликации
+	Peers []*Node
 }
 
 // UpdateData обновляет данные на текущем узле
@@ -29,7 +29,7 @@ func (n *Node) UpdateData(value string) {
 	n.Data.Value = value
 	n.Data.Version++
 	n.Data.Timestamp = time.Now() // обновляем временную метку
-	fmt.Printf("Node %d updated data to %s, version %d, timestamp %v\n", n.ID, n.Data.Value, n.Data.Version, n.Data.Timestamp)
+	fmt.Printf("Узел %d обновил данные: %s, версия %d, временная метка %v\n", n.ID, n.Data.Value, n.Data.Version, n.Data.Timestamp)
 }
 
 // ReadData читает данные с текущего узла
@@ -46,7 +46,7 @@ func (n *Node) SyncData() {
 		// Проверка версии данных, если версия отличается, передаем данные
 		if peer.Data.Version > n.Data.Version {
 			n.Data = peer.Data
-			fmt.Printf("Node %d syncs data from Node %d\n", n.ID, peer.ID)
+			fmt.Printf("Узел %d синхронизировал данные с узлом %d\n", n.ID, peer.ID)
 		}
 		peer.Mutex.Unlock()
 	}
@@ -73,14 +73,14 @@ func (n *Node) ResolveConflict(peer *Node) {
 		n.Mutex.Lock()
 		n.Data = peer.Data
 		n.Mutex.Unlock()
-		fmt.Printf("Node %d resolved conflict by taking Node %d's data\n", n.ID, peer.ID)
+		fmt.Printf("Узел %d разрешил конфликт, приняв данные узла %d\n", n.ID, peer.ID)
 	}
 }
 
 func main() {
-	// Создаем 5 узлов
-	nodes := make([]*Node, 5)
-	for i := 0; i < 5; i++ {
+	// Создаем узлов
+	nodes := make([]*Node, 10)
+	for i := 0; i < 10; i++ {
 		nodes[i] = &Node{ID: i + 1, Data: Data{Value: "initial", Version: 1, Timestamp: time.Now()}}
 	}
 
@@ -96,11 +96,16 @@ func main() {
 	}
 
 	// Моделируем параллельные записи с конфликтами на каждом узле
-	go nodes[0].UpdateData("update 1")
-	go nodes[1].UpdateData("update 2")
-	go nodes[2].UpdateData("update 3")
-	go nodes[3].UpdateData("update 4")
-	go nodes[4].UpdateData("update 5")
+	go nodes[0].UpdateData("обновление 1")
+	go nodes[1].UpdateData("обновление 2")
+	go nodes[2].UpdateData("обновление 3")
+	go nodes[3].UpdateData("обновление 4")
+	go nodes[4].UpdateData("обновление 5")
+	go nodes[4].UpdateData("обновление 6")
+	go nodes[4].UpdateData("обновление 7")
+	go nodes[4].UpdateData("обновление 8")
+	go nodes[4].UpdateData("обновление 9")
+	go nodes[4].UpdateData("обновление 10")
 
 	// Ждем завершения операций
 	time.Sleep(time.Second * 2)
@@ -119,6 +124,6 @@ func main() {
 
 	// Печатаем данные после синхронизации и разрешения конфликтов
 	for _, node := range nodes {
-		fmt.Printf("Node %d data: %v\n", node.ID, node.ReadData())
+		fmt.Printf("Данные узла %d: %v\n", node.ID, node.ReadData())
 	}
 }
